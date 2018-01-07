@@ -18,7 +18,14 @@ See more details here: <https://www.digitalocean.com/community/tutorials/how-to-
 
 7. Install unzip and git with ´sudo apt-get install unzip git´
 
+# Create the Database
 
+8. Clone this repo to the MySQL server, `git clone https://github.com/yfauser/planespotter.git`
+9. Execute the DB creation script `~/planespotter/db-install/create-planespotter-db.sh`
+
+# Cleanup
+
+If you ever want to recreate the database, you can use the DB deletion scrip `~/planespotter/db-install/delete-planespotter-db.sh` to drop the DB, and then recreate the DB starting with step 9.
 
 
 
