@@ -21,7 +21,8 @@ See more details here: <https://www.digitalocean.com/community/tutorials/how-to-
 # Create the Database
 
 8. Clone this repo to the MySQL server, `git clone https://github.com/yfauser/planespotter.git`
-9. Execute the DB creation script `~/planespotter/db-install/create-planespotter-db.sh`
+9. Change the two DB shell scripts to be executable `chmod +x ~/planespotter/db-install/*.sh`
+10. Execute the DB creation script `~/planespotter/db-install/create-planespotter-db.sh`
 
 # Cleanup
 
