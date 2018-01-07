@@ -1,1 +1,2 @@
-mysql -u root -p < ~/planespotter/db-install/delete-planespotter-db.sql
+cd ~/planespotter/db-install/
+mysql -u root -p < delete-planespotter-db.sql
