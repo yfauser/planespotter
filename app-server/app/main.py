@@ -77,4 +77,4 @@ manager.create_api(Plane, methods=['GET', 'POST', 'DELETE'],
                    collection_name='planes')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=False, threaded=True, port=80)
