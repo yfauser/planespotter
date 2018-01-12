@@ -1,11 +1,12 @@
-import flask
+from flask import Flask, jsonify
 import flask_sqlalchemy
 import flask_restless
 import pymysql
+import requests
 pymysql.install_as_MySQLdb()
 
-app = flask.Flask(__name__)
-app.config.from_pyfile('config.cfg')
+app = Flask(__name__)
+app.config.from_pyfile('config/config.cfg')
 database_uri = 'mysql://{}:{}@{}/{}'.format(app.config['DATABASE_USER'],
                                             app.config['DATABASE_PWD'],
                                             app.config['DATABASE_URL'],
@@ -68,6 +69,35 @@ class Plane(db.Model):
     kit_mfr = db.Column('KIT_MFR', db.String(255))
     kit_model = db.Column('KIT_MODEL', db.String(255))
     mode_s_code_hex = db.Column('MODE_S_CODE_HEX', db.String(255))
+
+
+@app.route('/api/planedetails/<icao>')
+def planedetails(icao):
+    host = 'public-api.adsbexchange.com'
+    path = '/VirtualRadar/AircraftList.json'
+    query = '?fIcoQ={}'.format(icao)
+    req = requests.get('http://{}{}{}'.format(host, path, query))
+
+    try:
+        ac_details = req.json()['acList'][0]
+        return jsonify(ac_details)
+    except IndexError:
+        return 'aircraft not found', 404
+
+
+@app.route('/api/planepicture/<icao>')
+def planepicture(icao):
+    host = 'www.airport-data.com'
+    path = '/api/ac_thumb.json'
+    query = '?m={}'.format(icao)
+    req = requests.get('http://{}{}{}'.format(host, path, query))
+
+    try:
+        ac_pictures = req.json()['data'][0]
+        return jsonify(ac_pictures)
+    except KeyError:
+        message = req.json()
+        return jsonify(message), 404
 
 
 manager = flask_restless.APIManager(app, flask_sqlalchemy_db=db)
