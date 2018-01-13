@@ -1,0 +1,67 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: planespotter-app
+  labels:
+    app: planespotter
+    tier: app-tier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: planespotter
+  template:
+    metadata:
+      labels:
+        app: planespotter
+    spec:
+      containers:
+      - name: planespotter
+        image: yfauser/planespotter-app-server:0731d4edb7c97d5f3b7049bf25e2b1f35160ad23
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: planespotter-app-cfg
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: planespotter-app-cfg
+data:
+  config.cfg: |
+    DATABASE_URL = '10.0.5.10'
+    DATABASE_USER = 'planespotter'
+    DATABASE_PWD = 'VMware1!'
+    DATABASE = 'planespotter'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: planespotter-svc
+  labels:
+    app: planespotter-svc
+spec:
+  ports:
+    # the port that this service should serve on
+    - port: 80
+  selector:
+    app: planespotter
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: planespotter-app-ingress
+spec:
+  rules:
+  - host: planespotter-api.pks.yves.local
+    http:
+      paths:
+      - backend:
+          serviceName: planespotter-svc
+          servicePort: 80
