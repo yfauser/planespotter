@@ -3,6 +3,7 @@ import flask_sqlalchemy
 import flask_restless
 import pymysql
 import requests
+import socket
 pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
@@ -13,6 +14,7 @@ database_uri = 'mysql://{}:{}@{}/{}'.format(app.config['DATABASE_USER'],
                                             app.config['DATABASE'])
 app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_POOL_TIMEOUT'] = 2
 db = flask_sqlalchemy.SQLAlchemy(app)
 
 
@@ -98,6 +100,28 @@ def planepicture(icao):
     except KeyError:
         message = req.json()
         return jsonify(message), 404
+
+
+@app.route('/api/healthcheck')
+def healthcheck():
+    db_state = check_tcp_socket(app.config['DATABASE_URL'], 3306)
+    position_data_state = check_tcp_socket('public-api.adsbexchange.com', 80)
+    picture_data_state = check_tcp_socket('www.airport-data.com', 80)
+
+    return jsonify({'database_connection': db_state,
+                    'position_data': position_data_state,
+                    'picture_data': picture_data_state})
+
+
+def check_tcp_socket(host, port):
+    try:
+        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_socket.settimeout(2)
+        tcp_socket.connect((host, port))
+        tcp_socket.close()
+        return True
+    except (socket.timeout, socket.error):
+        return False
 
 
 manager = flask_restless.APIManager(app, flask_sqlalchemy_db=db)
