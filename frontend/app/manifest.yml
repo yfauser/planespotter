@@ -1,0 +1,6 @@
+---
+applications:
+- name: planespotter
+  memory: 512M
+  instances: 1
+  buildpack: https://github.com/cloudfoundry/cf-buildpack-python.git

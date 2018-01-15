@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block details_state %}class="active"{% endblock %}
+
+{% block details_content %}
+<hr>
+<form class="form-inline">
+  <div class="form-group">
+    <div class="row">
+      <div class="col-md-4">
+        <h5>Registration Id <small>'eq' match</small></h5>
+        <div class="input-group">
+          <div class="input-group-addon">N-</div>
+          <input type="text" class="form-control" placeholder="e.g. 1000A" name="reg">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <h5>ICAO <small>'eq' match</small></h5>
+        <input type="text" class="form-control" placeholder="e.g. A00001" name="icao">
+      </div>
+      <div class="col-md-4">
+        <br><br>
+        <button type="submit" class="btn btn-primary btn-send">Search</button>
+      </div>
+    </div>
+  </div>
+</form>
+<hr>
+{% if search %}
+<div class="row">
+  <div class="col-md-4">
+    {% if picture %}
+      <a href="{{ picture.link }}" class="img-rounded" target="_blank">
+        <img src="{{ picture.image }}" alt="acft picture" class="img-responsive" width="300" height="186">
+      </a>
+      <p>Please click on the picture to open a new tab <br>with more pictures of this aircraft</p>
+    {% else %}
+      <p>Unfortunately, no picture is available for this Aircraft</p>
+    {% endif %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Aircraft possition data<small>  click on Lat/long for Google Maps</small></h3>
+      </div>
+      <div class="panel-body">
+        {% if acft_details %}
+        <table class="table table-striped">
+          <tbody>
+            <tr>
+              <td>Altitute</td>
+              <td>{{ acft_details.Alt }}</td>
+            </tr>
+            <tr>
+              <td style="cursor:pointer" target="_blank"
+               onclick="window.open('https://maps.google.com/?q={{ acft_details.Lat }},{{ acft_details.Long }}&ll={{ acft_details.Lat }},{{ acft_details.Long }}&z=6','_blank')">
+               Latitute</td>
+              <td style="cursor:pointer" target="_blank"
+               onclick="window.open('https://maps.google.com/?q={{ acft_details.Lat }},{{ acft_details.Long }}&ll={{ acft_details.Lat }},{{ acft_details.Long }}&z=6','_blank')">
+               {{ acft_details.Lat }}</td>
+            </tr>
+            <tr>
+              <td style="cursor:pointer"
+               onclick="window.open('https://maps.google.com/?q={{ acft_details.Lat }},{{ acft_details.Long }}&ll={{ acft_details.Lat }},{{ acft_details.Long }}&z=6','_blank')">
+               Longitute</td>
+              <td style="cursor:pointer" target="_blank"
+               onclick="window.open('https://maps.google.com/?q={{ acft_details.Lat }},{{ acft_details.Long }}&ll={{ acft_details.Lat }},{{ acft_details.Long }}&z=6','_blank')">
+               {{ acft_details.Long }}</td>
+            </tr>
+            <tr>
+              <td>From</td>
+              <td>{{ acft_details.From }}</td>
+            </tr>
+            <tr>
+              <td>To</td>
+              <td>{{ acft_details.To }}</td>
+            </tr>
+            <tr>
+              <td>Stops</td>
+              <td>{{ acft_details.Stops }}</td>
+            </tr>
+          </tbody>
+        </table>
+        {% else %}
+          <p>Unfortunately, no possition data is available for this Aircraft right now</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Owner Details</h3>
+      </div>
+      <div class="panel-body">
+        {% if acft %}
+        <address>
+          <strong>{{ acft.name }}</strong><br>
+          {{ acft.street }}<br>
+          {{ acft.street2 }}<br>
+          {{ acft.zip_code }} {{ acft.city }}, {{ acft.state }}<br>
+        </address>
+        {% else %}
+          <p>Unfortunately, no data is available for this Aircraft in the database</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Aircraft Details</h3>
+      </div>
+      <div class="panel-body">
+        {% if acft %}
+        <table class="table table-striped">
+          <tbody>
+            <tr>
+              <td>Manufacturer</td>
+              <td>{{ acft.planedetails.mfr }}</td>
+            </tr>
+            <tr>
+              <td>Model</td>
+              <td>{{ acft.planedetails.model }}</td>
+            </tr>
+            <tr>
+              <td>Manufactured in Year</td>
+              <td>{{ acft.year_mfr }}</td>
+            </tr>
+            <tr>
+              <td>Registration Id</td>
+              <td>{{ acft.n_number }}</td>
+            </tr>
+            <tr>
+              <td>ICAO</td>
+              <td>{{ acft.mode_s_code_hex }}</td>
+            </tr>
+          </tbody>
+        </table>
+        {% else %}
+          <p>Unfortunately, no data is available for this Aircraft in the database</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

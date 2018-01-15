@@ -11,3 +11,4 @@ Various Links for Planespotting App
 <https://en.wikipedia.org/wiki/List_of_airline_codes>
 <https://www.adsbexchange.com/datafields/>
 <https://www.adsbexchange.com/data/#>
+<https://maps.google.com/?q=37.0667,-112.049&ll=37.0667,-112.049&z=6> # Google maps link with position and Zoom

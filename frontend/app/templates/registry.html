@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block registry_state %}class="active"{% endblock %}
+
+{% block registry_content %}
+
+<hr>
+<form class="form-inline">
+  <div class="form-group">
+    <div class="row">
+      <div class="col-md-2">
+        <h5>Registration Id <small>'eq' match</small></h5>
+        <div class="input-group">
+          <div class="input-group-addon">N-</div>
+          <input type="text" class="form-control" placeholder="e.g. 1000A" name="reg">
+        </div>
+      </div>
+      <div class="col-md-2">
+        <h5>Owner Name <small>'like' match</small></h5>
+        <input type="text" class="form-control" placeholder="e.g. United Airlines" name="owner">
+      </div>
+      <div class="col-md-2">
+        <h5>Manufacturer <small>'like' match</small></h5>
+        <input type="text" class="form-control" placeholder="e.g. Airbus, Boeing" name="mfr">
+      </div>
+      <div class="col-md-2">
+        <h5>Aircraft Model <small>'like' match</small></h5>
+        <input type="text" class="form-control" placeholder="e.g. A380, 747" name="model">
+      </div>
+      <div class="col-md-2">
+        <h5>Airborne <small>'boolean' match</small></h5>
+        <div class="checkbox">
+          <label><input type="checkbox" class="form-control" value="true" name="airborne">  Is Airborne</label>
+        </div>
+      </div>
+      <div class="col-md-2">
+        <br><br>
+        <button type="submit" class="btn btn-primary btn-send">Search</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<hr>
+{{ pagination.info }}
+{{ pagination.links }}
+<div class="table-responsive">
+  <table class="table table-striped">
+  <thead>
+    <tr><th>N-Number</th><th>Owner</th><th>City</th><th>State</th><th>Manufacturer</th><th>Model</th><th>ICAO</th></tr>
+  </thead>
+  <tbody>
+    {% for acft in acfts %}
+    <tr>
+    <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">N-{{ acft.n_number }}</td>
+    <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.name }}</td>
+    <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.city }}</td>
+    <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.state }}</td>
+    <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.planedetails.mfr }}</td>
+    <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.planedetails.model }}</td>
+    <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.mode_s_code_hex }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  </table>
+{{ pagination.links }}
+</div>
+{% endblock %}
