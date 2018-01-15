@@ -11,6 +11,7 @@ registry_url = 'http://{}/api/planes'.format(app_server_hostname)
 planetypes_url = 'http://{}/api/planetypes'.format(app_server_hostname)
 planedetails_url = 'http://{}/api/planedetails'.format(app_server_hostname)
 planepicture_url = 'http://{}/api/planepicture'.format(app_server_hostname)
+health_url = 'http://{}/api/healthcheck'.format(app_server_hostname)
 
 
 @app.route('/')
@@ -118,12 +119,35 @@ def details():
 
 @app.route('/health.html')
 def health():
-    return render_template('health.html')
+    app_server = None
+    db_connection = None
+    position_server = None
+    picture_server = None
+    try:
+        resp = req.get(health_url)
+        if resp.status_code == 200:
+            health_detail = resp.json()
+            db_connection = health_detail.get('database_connection', None)
+            position_server = health_detail.get('position_data', None)
+            picture_server = health_detail.get('picture_data', None)
+            app_server = True
+    except req.exceptions.ConnectionError:
+        pass
+
+    return render_template('health.html', app_server=app_server,
+                           db_connection=db_connection,
+                           position_server=position_server,
+                           picture_server=picture_server)
 
 
 @app.route('/contact.html')
 def contact():
     return render_template('contact.html')
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
 
 
 def trim_dict_content(dict_to_trim):

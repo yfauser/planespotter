@@ -1,1 +1,3 @@
 Flask
+flask-paginate
+requests

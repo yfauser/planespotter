@@ -4,3 +4,5 @@ applications:
   memory: 512M
   instances: 1
   buildpack: https://github.com/cloudfoundry/cf-buildpack-python.git
+  env:
+    PLANESPOTTER_API_ENDPOINT: planespotter-api.pks.yves.local
