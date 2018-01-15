@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: planespotter
-        image: yfauser/planespotter-app-server:0731d4edb7c97d5f3b7049bf25e2b1f35160ad23
+        image: yfauser/planespotter-app-server:9cb151e7b9209f6f6b32c98908bde9abede38960
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
@@ -35,7 +35,7 @@ metadata:
   name: planespotter-app-cfg
 data:
   config.cfg: |
-    DATABASE_URL = '10.0.5.10'
+    DATABASE_URL = 'mysql.yves.local'
     DATABASE_USER = 'planespotter'
     DATABASE_PWD = 'VMware1!'
     DATABASE = 'planespotter'
