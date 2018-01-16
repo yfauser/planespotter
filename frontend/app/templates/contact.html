@@ -1,2 +1,16 @@
 {% extends "base.html" %}
 {% block contact_state %}class="active"{% endblock %}
+
+{% block contact_content %}
+<div class="jumbotron">
+  <h1>Contact</h1>
+  <p>I hope you enjoy this Demo App. If you have any questions, feature request, bug report,
+    or simply want to say 'Hello' visit the projects git repo and open issues and pull requests, or simply send an email to <a href="mailto:yfauser@vmware.com?subject=Planepotter Question&body=Hello, I have a question regarding Planespotter">yfauser@vmware.com</a></p>
+  <br>
+  <div class="btn-group" role="group" aria-label="contact">
+    <p><a class="btn btn-default btn-lg" href="mailto:yfauser@vmware.com?subject=Planepotter Question&body=Hello, I have a question regarding Planespotter" role="button">Mail me</a></p>
+    <p><a class="btn btn-default btn-lg" href="https://github.com/yfauser/planespotter" role="button">Visit Github Repo</a></p>
+  </div>
+</div>
+
+{% endblock %}

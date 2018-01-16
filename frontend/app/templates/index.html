@@ -4,21 +4,23 @@
 <!-- Jumbotron -->
 <div class="jumbotron">
   <h1>Planespotter</h1>
-  <p class="lead">At some point I will have to add text for the Home-Page here</p>
+  <p class="lead">Welcome to Planespotter! With this Cloud Native Demo App, you can retrieve records from the <br>Federal Aviation Administration (FAA) registry (N-Number), and get live position data from airborne aircrafts equipped with an Automatic dependent surveillance – broadcast (ADS–B) transmitter.
+ </p>
 </div>
 {% endblock %}
 
 {% block index_content %}
 <div class="row">
-  <div class="col-lg-6">
-    <h2>Heading</h2>
-    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+  <div class="col-lg-4">
+    <h2>Registry</h2>
+    <p>Click on the button bellow to search through the <br>Federal Aviation Administration (FAA) registry</p>
+    <br>
     <p><a class="btn btn-lg btn-success" href="registry.html" role="button">US Aircraft Registry</a></p>
   </div>
-  <div class="col-lg-6">
-    <h2>Heading</h2>
-    <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-    <p><a class="btn btn-lg btn-success" href="acftstatus.html" role="button">Individual Aircraft Details</a></p>
+  <div class="col-lg-6 col-md-offset-2">
+    <h2>Aircraft Details</h2>
+    <p>Click on the button bellow to retrieve details of an individual aircraft, and if available, its position and available pictures. You can search for US registry numbers (N-Number) and International Civil Aviation Organization (ICAO) mode S Transmitter Id (used with ADS-B)<p>
+    <a class="btn btn-lg btn-success" href="details.html" role="button">Individual Aircraft Details</a></p>
   </div>
 </div>
 {% endblock %}
