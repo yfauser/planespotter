@@ -25,6 +25,9 @@
   </div>
 </form>
 <hr>
+{% if not_found %}
+<h5>Aircraft with the registration N-{{ registration_id }} not found in database</h5>
+{% endif %}
 {% if search %}
 <div class="row">
   <div class="col-md-4">

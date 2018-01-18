@@ -30,11 +30,18 @@
       Database connectivity success
     </div>
     {% else %}
-    <div class="alert alert-danger" role="alert">
-      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-      <span class="sr-only">Error:</span>
-      Database connectivity failure
-    </div>
+      {% if app_server %}
+      <div class="alert alert-danger" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        Database connectivity failure
+      {% else %}
+      <div class="alert alert-warning" role="alert">
+        <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        Database connectivity Unknown
+      {% endif %}
+      </div>
     {% endif %}
     <hr>
     {% if position_server %}
@@ -44,11 +51,18 @@
       Position Server connectivity success
     </div>
     {% else %}
-    <div class="alert alert-danger" role="alert">
-      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-      <span class="sr-only">Error:</span>
-      Position Server connectivity failure
-    </div>
+      {% if app_server %}
+      <div class="alert alert-danger" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        Position Server connectivity failure
+      {% else %}
+      <div class="alert alert-warning" role="alert">
+        <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        Position Server connectivity Unknown
+      {% endif %}
+      </div>
     {% endif %}
     <hr>
     {% if picture_server %}
@@ -58,11 +72,18 @@
       Picture Server connectivity success
     </div>
     {% else %}
-    <div class="alert alert-danger" role="alert">
-      <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-      <span class="sr-only">Error:</span>
-      Picture Server connectivity failure
-    </div>
+      {% if app_server %}
+      <div class="alert alert-danger" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        Picture Server connectivity failure
+      {% else %}
+      <div class="alert alert-warning" role="alert">
+        <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        Picture Server connectivity Unknown
+      {% endif %}
+      </div>
     {% endif %}
   </div>
 </div>

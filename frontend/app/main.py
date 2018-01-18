@@ -55,9 +55,16 @@ def registry():
         req_params['q'] = json.dumps(dict(filters=req_filters))
 
     headers = {'Content-Type': 'application/json'}
-    resp = req.get(registry_url, params=req_params, headers=headers).json()
+    try:
+        resp = req.get(registry_url, params=req_params, headers=headers,
+                       timeout=3).json()
+    except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout) as e:
+        return render_template('500.html'), 500
 
     acfts_raw = resp.get('objects', None)
+    if not acfts_raw:
+        return render_template('500.html'), 500
+
     acfts = [trim_dict_content(acft_raw) for acft_raw in acfts_raw]
     num_results = resp.get('num_results', 1)
     pagination = Pagination(page=page, total=num_results,
@@ -77,14 +84,23 @@ def details():
             req_filters = [{"name": "n_number", "op": "eq", "val": search_reg}]
             req_params = {}
             req_params['q'] = json.dumps(dict(filters=req_filters))
-            resp = req.get(registry_url, params=req_params,
-                           headers=req_headers).json()
-            acfts_raw = resp.get('objects', None)
+            try:
+                resp = req.get(registry_url, params=req_params,
+                               headers=req_headers, timeout=3)
+                if resp.status_code == 500:
+                    return render_template('500.html'), 500
+                resp_body = resp.json()
+            except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
+                return render_template('500.html'), 500
+
+            acfts_raw = resp_body.get('objects', None)
             if acfts_raw:
                 acft = trim_dict_content(acfts_raw[0])
                 icao = acft.get('mode_s_code_hex', None)
             else:
-                return render_template('details.html', search=False)
+                return render_template('details.html', search=False,
+                                       not_found=True,
+                                       registration_id=search_reg)
         else:
             return render_template('details.html', search=False)
     else:
@@ -92,8 +108,12 @@ def details():
                         "val": search_icoa}]
         req_params = {}
         req_params['q'] = json.dumps(dict(filters=req_filters))
-        resp = req.get(registry_url, params=req_params,
-                       headers=req_headers).json()
+        try:
+            resp = req.get(registry_url, params=req_params,
+                           headers=req_headers, timeout=3).json()
+        except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
+            return render_template('500.html'), 500
+
         acfts_raw = resp.get('objects', None)
         if acfts_raw:
             acft = trim_dict_content(acfts_raw[0])
@@ -101,15 +121,27 @@ def details():
             acft = None
         icao = search_icoa
 
-    resp = req.get('{}/{}'.format(planedetails_url, icao))
+    try:
+        resp = req.get('{}/{}'.format(planedetails_url, icao))
+    except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
+        return render_template('500.html'), 500
+
     if resp.status_code == 200:
         plane_details = resp.json()
+    elif resp.status_code == 500:
+        return render_template('500.html'), 500
     else:
         plane_details = None
 
-    resp = req.get('{}/{}'.format(planepicture_url, icao))
+    try:
+        resp = req.get('{}/{}'.format(planepicture_url, icao))
+    except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
+        return render_template('500.html'), 500
+
     if resp.status_code == 200:
         plane_picture = resp.json()
+    elif resp.status_code == 500:
+        return render_template('500.html'), 500
     else:
         plane_picture = None
 
@@ -124,14 +156,14 @@ def health():
     position_server = None
     picture_server = None
     try:
-        resp = req.get(health_url)
+        resp = req.get(health_url, timeout=3)
         if resp.status_code == 200:
             health_detail = resp.json()
             db_connection = health_detail.get('database_connection', None)
             position_server = health_detail.get('position_data', None)
             picture_server = health_detail.get('picture_data', None)
             app_server = True
-    except req.exceptions.ConnectionError:
+    except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
         pass
 
     return render_template('health.html', app_server=app_server,
@@ -165,6 +197,6 @@ def trim_dict_content(dict_to_trim):
     return new_dict
 
 
-debugmode = os.getenv('DEBUG_MODE', False)
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=debugmode, port=int(port))
+    debugmode = os.getenv('DEBUG_MODE', False)
+    app.run(host='0.0.0.0', debug=bool(debugmode), port=int(port))
