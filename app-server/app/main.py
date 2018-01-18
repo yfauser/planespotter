@@ -17,6 +17,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_POOL_TIMEOUT'] = 2
 db = flask_sqlalchemy.SQLAlchemy(app)
 
+adsb_server = {'host': 'public-api.adsbexchange.com',
+               'path': '/VirtualRadar/AircraftList.json',
+               'query': '?fIcoQ='}
+airport_data_server = {'host': 'www.airport-data.com',
+                       'path': '/api/ac_thumb.json', 'query': '?m='}
+
 
 class Planetype(db.Model):
     __tablename__ = 'ACFTREF'
@@ -75,11 +81,12 @@ class Plane(db.Model):
 
 @app.route('/api/planedetails/<icao>')
 def planedetails(icao):
-    host = 'public-api.adsbexchange.com'
-    path = '/VirtualRadar/AircraftList.json'
-    query = '?fIcoQ={}'.format(icao)
-    req = requests.get('http://{}{}{}'.format(host, path, query))
+    if not check_tcp_socket(adsb_server['host'], 80):
+        return 'Connection to ADSB Exchange Server broken', 500
 
+    req = requests.get('http://{}{}{}{}'.format(adsb_server['host'],
+                                                adsb_server['path'],
+                                                adsb_server['query'], icao))
     try:
         ac_details = req.json()['acList'][0]
         return jsonify(ac_details)
@@ -89,11 +96,13 @@ def planedetails(icao):
 
 @app.route('/api/planepicture/<icao>')
 def planepicture(icao):
-    host = 'www.airport-data.com'
-    path = '/api/ac_thumb.json'
-    query = '?m={}'.format(icao)
-    req = requests.get('http://{}{}{}'.format(host, path, query))
+    if not check_tcp_socket(airport_data_server['host'], 80):
+        return 'Connection to Airport Data Server broken', 500
 
+    req = requests.get('http://{}{}{}{}'.format(airport_data_server['host'],
+                                                airport_data_server['path'],
+                                                airport_data_server['query'],
+                                                icao))
     try:
         ac_pictures = req.json()['data'][0]
         return jsonify(ac_pictures)
@@ -105,8 +114,8 @@ def planepicture(icao):
 @app.route('/api/healthcheck')
 def healthcheck():
     db_state = check_tcp_socket(app.config['DATABASE_URL'], 3306)
-    position_data_state = check_tcp_socket('public-api.adsbexchange.com', 80)
-    picture_data_state = check_tcp_socket('www.airport-data.com', 80)
+    position_data_state = check_tcp_socket(adsb_server['host'], 80)
+    picture_data_state = check_tcp_socket(airport_data_server['host'], 80)
 
     return jsonify({'database_connection': db_state,
                     'position_data': position_data_state,
@@ -124,11 +133,24 @@ def check_tcp_socket(host, port):
         return False
 
 
+def check_db_connectivity(**kw):
+    print 'pre-preprocessor active'
+    if not check_tcp_socket(app.config['DATABASE_URL'], 3306):
+        raise flask_restless.ProcessingException(
+            description='Database Connectivity Error', code=500)
+
+
 manager = flask_restless.APIManager(app, flask_sqlalchemy_db=db)
 manager.create_api(Planetype, methods=['GET', 'POST', 'DELETE'],
-                   collection_name='planetypes')
+                   collection_name='planetypes',
+                   preprocessors={'GET_SINGLE': [check_db_connectivity],
+                                  'GET_MANY': [check_db_connectivity],
+                                  'DELETE': [check_db_connectivity]})
 manager.create_api(Plane, methods=['GET', 'POST', 'DELETE'],
-                   collection_name='planes')
+                   collection_name='planes',
+                   preprocessors={'GET_SINGLE': [check_db_connectivity],
+                                  'GET_MANY': [check_db_connectivity],
+                                  'DELETE': [check_db_connectivity]})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=False, threaded=True, port=80)
