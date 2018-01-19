@@ -71,7 +71,8 @@ def wr_icao_redis(icao_list, r_client):
         pipe.expire(icao, 90)
     try:
         pipe.execute()
-    except redis.exceptions.ConnectionError as e:
+    except (redis.exceptions.ConnectionError,
+            redis.exceptions.TimeoutError) as e:
         return None, '\nredis connection fail: \n{}\n'.format(e.message)
     print "wrote {} records into redis".format(len(icao_list))
     return True, None
@@ -93,7 +94,8 @@ def main():
     except ConfigParser.NoOptionError:
         adsb_port = 32030
 
-    r_client = redis.StrictRedis(host=redis_server, port=redis_port)
+    r_client = redis.StrictRedis(host=redis_server, port=redis_port,
+                                 socket_timeout=10)
 
     unrecoverable_error = False
     while not unrecoverable_error:
