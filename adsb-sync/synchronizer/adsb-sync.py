@@ -65,12 +65,14 @@ def gen_icao_list(acft_json):
 
 
 def wr_icao_redis(icao_list, r_client):
+    pipe = r_client.pipeline()
     for icao in icao_list:
-        try:
-            r_client.hset(icao, "airborne", "true")
-            r_client.expire(icao, 90)
-        except redis.exceptions.ConnectionError as e:
-            return None, '\nredis connection fail: \n{}\n'.format(e.message)
+        pipe.hset(icao, "airborne", "true")
+        pipe.expire(icao, 90)
+    try:
+        pipe.execute()
+    except redis.exceptions.ConnectionError as e:
+        return None, '\nredis connection fail: \n{}\n'.format(e.message)
     print "wrote {} records into redis".format(len(icao_list))
     return True, None
 
