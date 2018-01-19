@@ -3,8 +3,27 @@ import redis
 import ConfigParser
 import socket
 import json
+import requests as req
 from time import sleep
 BUFSIZE = 4096
+
+
+def adsb_poll(url, qfilter, r_client):
+    print 'starting polling data ...'
+    while True:
+        try:
+            resp = req.get('{}{}'.format(url, qfilter))
+        except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
+            return True, '\nadsb server connection fail: \n{}\n'.format(resp)
+        if resp.status_code != 200:
+            return True, '\nadsb server returned bad code: \n{}\n'.format(resp)
+        else:
+            ac_list = resp.text
+        icao_list = gen_icao_list(ac_list)
+        rds_write_res, rds_write_err = wr_icao_redis(icao_list, r_client, 600)
+        if rds_write_err:
+            return True, rds_write_err
+        sleep(300)
 
 
 def adsb_stream(server, port, r_client):
@@ -38,7 +57,8 @@ def adsb_stream(server, port, r_client):
             last_ac_list, remainder = get_one_aclist(last_read)
             last_read = remainder
             icao_list = gen_icao_list(last_ac_list)
-            rds_write_res, rds_write_err = wr_icao_redis(icao_list, r_client)
+            rds_write_res, rds_write_err = wr_icao_redis(icao_list,
+                                                         r_client, 60)
             if rds_write_err:
                 return True, rds_write_err
         len_last_read = len(last_read)
@@ -64,11 +84,11 @@ def gen_icao_list(acft_json):
     return icao_list
 
 
-def wr_icao_redis(icao_list, r_client):
+def wr_icao_redis(icao_list, r_client, data_lifetime):
     pipe = r_client.pipeline()
     for icao in icao_list:
         pipe.hset(icao, "airborne", "true")
-        pipe.expire(icao, 90)
+        pipe.expire(icao, data_lifetime)
     try:
         pipe.execute()
     except (redis.exceptions.ConnectionError,
@@ -88,22 +108,39 @@ def main():
     except ConfigParser.NoOptionError:
         redis_port = 6379
 
-    adsb_server = config.get('main', 'adsb_server')
-    try:
-        adsb_port = int(config.get('main', 'adsb_port'))
-    except ConfigParser.NoOptionError:
-        adsb_port = 32030
-
     r_client = redis.StrictRedis(host=redis_server, port=redis_port,
                                  socket_timeout=10)
 
-    unrecoverable_error = False
-    while not unrecoverable_error:
-        error, error_details = adsb_stream(adsb_server, adsb_port, r_client)
-        if error:
-            print 'Error in data ret/wr loop:{}'.format(error_details)
-        print 'Trying to start data retrieval loop again in 30 seconds\n'
-        sleep(30)
+    if config.get('main', 'adsb_type') == 'stream':
+        adsb_server_stream = config.get('main', 'adsb_server_stream')
+        unrecoverable_error = False
+        try:
+            adsb_port = int(config.get('main', 'adsb_port'))
+        except ConfigParser.NoOptionError:
+            adsb_port = 32030
+        while not unrecoverable_error:
+            error, error_details = adsb_stream(adsb_server_stream, adsb_port,
+                                               r_client)
+            if error:
+                print 'Error in data ret/wr loop:{}'.format(error_details)
+            print 'Trying to start data retrieval loop again in 30 seconds\n'
+            sleep(30)
+
+    if config.get('main', 'adsb_type') == 'poll':
+
+        unrecoverable_error = False
+        adsb_server_url = config.get('main', 'adsb_server_poll_url')
+        try:
+            adsb_qfilter = config.get('main', 'adsb_poll_filter')
+        except ConfigParser.NoOptionError:
+            adsb_qfilter = '?fRegS=N'
+        while not unrecoverable_error:
+            error, error_details = adsb_poll(adsb_server_url, adsb_qfilter,
+                                             r_client)
+            if error:
+                print 'Error in data poll loop:{}'.format(error_details)
+            print 'Trying to start data poll loop again in 30 seconds\n'
+            sleep(30)
 
 
 if __name__ == '__main__':
