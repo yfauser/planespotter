@@ -4,6 +4,7 @@ import flask_restless
 import pymysql
 import requests
 import socket
+import redis
 pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
@@ -12,6 +13,8 @@ database_uri = 'mysql://{}:{}@{}/{}'.format(app.config['DATABASE_USER'],
                                             app.config['DATABASE_PWD'],
                                             app.config['DATABASE_URL'],
                                             app.config['DATABASE'])
+redis_server = app.config['REDIS_HOST']
+redis_port = app.config['REDIS_PORT']
 app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_POOL_TIMEOUT'] = 2
@@ -22,6 +25,9 @@ adsb_server = {'host': 'public-api.adsbexchange.com',
                'query': '?fIcoQ='}
 airport_data_server = {'host': 'www.airport-data.com',
                        'path': '/api/ac_thumb.json', 'query': '?m='}
+
+r_client = redis.StrictRedis(host=redis_server, port=redis_port,
+                             socket_timeout=3)
 
 
 class Planetype(db.Model):
@@ -78,6 +84,10 @@ class Plane(db.Model):
     kit_model = db.Column('KIT_MODEL', db.String(255))
     mode_s_code_hex = db.Column('MODE_S_CODE_HEX', db.String(255))
 
+    def airborne(self):
+        icao_stripped = self.mode_s_code_hex.strip()
+        return get_redis_key(icao_stripped)
+
 
 @app.route('/api/planedetails/<icao>')
 def planedetails(icao):
@@ -116,16 +126,19 @@ def healthcheck():
     db_state = check_tcp_socket(app.config['DATABASE_URL'], 3306)
     position_data_state = check_tcp_socket(adsb_server['host'], 80)
     picture_data_state = check_tcp_socket(airport_data_server['host'], 80)
+    redis_server = check_tcp_socket(app.config['REDIS_HOST'],
+                                    int(app.config['REDIS_PORT']))
 
     return jsonify({'database_connection': db_state,
                     'position_data': position_data_state,
-                    'picture_data': picture_data_state})
+                    'picture_data': picture_data_state,
+                    'redis_server': redis_server})
 
 
-def check_tcp_socket(host, port):
+def check_tcp_socket(host, port, s_timeout=2):
     try:
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcp_socket.settimeout(2)
+        tcp_socket.settimeout(s_timeout)
         tcp_socket.connect((host, port))
         tcp_socket.close()
         return True
@@ -134,10 +147,21 @@ def check_tcp_socket(host, port):
 
 
 def check_db_connectivity(**kw):
-    print 'pre-preprocessor active'
     if not check_tcp_socket(app.config['DATABASE_URL'], 3306):
         raise flask_restless.ProcessingException(
             description='Database Connectivity Error', code=500)
+
+
+def get_redis_key(icao):
+    if not check_tcp_socket(app.config['REDIS_HOST'],
+                            int(app.config['REDIS_PORT']), s_timeout=0.5):
+        return False
+    airborne_state = r_client.hget(icao, "airborne")
+    print airborne_state, icao
+    if not airborne_state:
+        return False
+    else:
+        return True
 
 
 manager = flask_restless.APIManager(app, flask_sqlalchemy_db=db)
@@ -150,7 +174,9 @@ manager.create_api(Plane, methods=['GET', 'POST', 'DELETE'],
                    collection_name='planes',
                    preprocessors={'GET_SINGLE': [check_db_connectivity],
                                   'GET_MANY': [check_db_connectivity],
-                                  'DELETE': [check_db_connectivity]})
+                                  'DELETE': [check_db_connectivity]},
+                   include_methods=['airborne'])
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False, threaded=True, port=80)
+#   app.run(host='0.0.0.0', debug=False, threaded=True, port=80)
+    app.run(debug=True)
