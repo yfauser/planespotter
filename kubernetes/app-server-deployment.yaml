@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: planespotter
-        image: yfauser/planespotter-app-server:c0253b88106cc529cc196aaf32f6cebb0c37a92a
+        image: yfauser/planespotter-app-server:638ff35b8bbc5c346597876f510b1167f93e4e00
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
