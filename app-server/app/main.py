@@ -5,10 +5,16 @@ import pymysql
 import requests
 import socket
 import redis
+import os
 pymysql.install_as_MySQLdb()
+DEV_MODE = False
 
 app = Flask(__name__)
-app.config.from_pyfile('config/config.cfg')
+if not DEV_MODE:
+    app.config.from_pyfile('config/dev-config.cfg')
+else:
+    app.config.from_pyfile('config/config.cfg')
+
 database_uri = 'mysql://{}:{}@{}/{}'.format(app.config['DATABASE_USER'],
                                             app.config['DATABASE_PWD'],
                                             app.config['DATABASE_URL'],
@@ -94,9 +100,9 @@ def planedetails(icao):
     if not check_tcp_socket(adsb_server['host'], 80):
         return 'Connection to ADSB Exchange Server broken', 500
 
-    req = requests.get('http://{}{}{}{}'.format(adsb_server['host'],
-                                                adsb_server['path'],
-                                                adsb_server['query'], icao))
+    req = requests.get('https://{}{}{}{}'.format(adsb_server['host'],
+                                                 adsb_server['path'],
+                                                 adsb_server['query'], icao))
     try:
         ac_details = req.json()['acList'][0]
         return jsonify(ac_details)
@@ -177,4 +183,8 @@ manager.create_api(Plane, methods=['GET', 'POST', 'DELETE'],
                    include_methods=['airborne'])
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False, threaded=True, port=80)
+    DEV_MODE = os.getenv('DEV_ENV', None)
+    if not DEV_MODE:
+        app.run(host='0.0.0.0', debug=False, threaded=True, port=80)
+    else:
+        app.run(debug=True)
