@@ -30,6 +30,7 @@ def registry():
     search_reg = request.args.get('reg', None)
     search_model = request.args.get('model', None)
     search_mfr = request.args.get('mfr', None)
+    search_icao = request.args.get('icao', None)
 
     req_filters = []
     if search_owner:
@@ -38,6 +39,9 @@ def registry():
     if search_reg:
         req_filters.append({"name": "n_number", "op": "eq",
                             "val": search_reg})
+    if search_icao:
+        req_filters.append({"name": "mode_s_code_hex", "op": "eq",
+                            "val": search_icao})
     if search_model:
         search_model = '%{}%'.format(search_model)
         planedetails_model_fiter = {"name": "model", "op": "like",
@@ -51,19 +55,17 @@ def registry():
         req_filters.append({"name": "planedetails", "op": "has",
                             "val": planedetails_mfr_fiter})
 
-    if search_owner or search_reg or search_model or search_mfr:
+    if search_owner or search_reg or search_model or search_mfr or search_icao:
         req_params['q'] = json.dumps(dict(filters=req_filters))
 
     headers = {'Content-Type': 'application/json'}
     try:
         resp = req.get(registry_url, params=req_params, headers=headers,
-                       timeout=3).json()
+                       timeout=6).json()
     except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout) as e:
         return render_template('500.html'), 500
 
     acfts_raw = resp.get('objects', None)
-    if not acfts_raw:
-        return render_template('500.html'), 500
 
     acfts = [trim_dict_content(acft_raw) for acft_raw in acfts_raw]
     num_results = resp.get('num_results', 1)
@@ -90,7 +92,8 @@ def details():
                 if resp.status_code == 500:
                     return render_template('500.html'), 500
                 resp_body = resp.json()
-            except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
+            except (req.exceptions.ConnectionError,
+                    req.exceptions.ReadTimeout):
                 return render_template('500.html'), 500
 
             acfts_raw = resp_body.get('objects', None)
@@ -155,6 +158,7 @@ def health():
     db_connection = None
     position_server = None
     picture_server = None
+    redis_server = None
     try:
         resp = req.get(health_url, timeout=3)
         if resp.status_code == 200:
@@ -162,6 +166,7 @@ def health():
             db_connection = health_detail.get('database_connection', None)
             position_server = health_detail.get('position_data', None)
             picture_server = health_detail.get('picture_data', None)
+            redis_server = health_detail.get('redis_server', None)
             app_server = True
     except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
         pass
@@ -169,7 +174,8 @@ def health():
     return render_template('health.html', app_server=app_server,
                            db_connection=db_connection,
                            position_server=position_server,
-                           picture_server=picture_server)
+                           picture_server=picture_server,
+                           redis_server=redis_server)
 
 
 @app.route('/contact.html')
@@ -194,6 +200,8 @@ def trim_dict_content(dict_to_trim):
                 trimmed = sub_value.strip()
                 new_sub_dict[sub_key] = trimmed
             new_dict[key] = new_sub_dict
+        elif isinstance(value, bool):
+            new_dict[key] = value
     return new_dict
 
 

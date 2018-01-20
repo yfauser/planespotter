@@ -85,6 +85,27 @@
       {% endif %}
       </div>
     {% endif %}
+    <hr>
+    {% if redis_server %}
+    <div class="alert alert-success" role="alert">
+      <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+      <span class="sr-only">Error:</span>
+      Redis Server connectivity success
+    </div>
+    {% else %}
+      {% if app_server %}
+      <div class="alert alert-danger" role="alert">
+        <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        Redis Server connectivity failure
+      {% else %}
+      <div class="alert alert-warning" role="alert">
+        <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
+        <span class="sr-only">Error:</span>
+        Redis Server connectivity Unknown
+      {% endif %}
+      </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

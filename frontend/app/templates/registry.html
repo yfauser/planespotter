@@ -27,10 +27,8 @@
         <input type="text" class="form-control" placeholder="e.g. A380, 747" name="model">
       </div>
       <div class="col-md-2">
-        <h5>Airborne <small>'boolean' match</small></h5>
-        <div class="checkbox">
-          <label><input type="checkbox" class="form-control" value="true" name="airborne">  Is Airborne</label>
-        </div>
+        <h5>ICAO <small>'eg' match</small></h5>
+        <input type="text" class="form-control" placeholder="e.g. A00001" name="icao">
       </div>
       <div class="col-md-2">
         <br><br>
@@ -46,11 +44,11 @@
 <div class="table-responsive">
   <table class="table table-striped">
   <thead>
-    <tr><th>N-Number</th><th>Owner</th><th>City</th><th>State</th><th>Manufacturer</th><th>Model</th><th>ICAO</th></tr>
+    <tr><th>N-Number</th><th>Owner</th><th>City</th><th>State</th><th>Manufacturer</th><th>Model</th><th>ICAO</th><th>Airborne</th></tr>
   </thead>
   <tbody>
     {% for acft in acfts %}
-    <tr>
+    <tr {% if acft.airborne %}class="success"{% endif %}>
     <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">N-{{ acft.n_number }}</td>
     <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.name }}</td>
     <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.city }}</td>
@@ -58,6 +56,12 @@
     <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.planedetails.mfr }}</td>
     <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.planedetails.model }}</td>
     <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">{{ acft.mode_s_code_hex }}</td>
+    <td style="cursor:pointer" onclick="location.href='details.html?icao={{ acft.mode_s_code_hex }}'">
+      {% if acft.airborne %}
+      Yes
+      {% else %}
+      No
+      {% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>
