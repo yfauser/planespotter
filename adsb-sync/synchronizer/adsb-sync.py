@@ -11,19 +11,30 @@ BUFSIZE = 4096
 def adsb_poll(url, qfilter, r_client):
     print 'starting polling data ...'
     while True:
+
+        known_icao, ldv = get_icao_redis(r_client)
+        final_qfilter = '{}&ldv={}'.format(qfilter, ldv)
+        data = '-'.join(known_icao)
+        data = 'icaos=' + data
         try:
-            resp = req.get('{}{}'.format(url, qfilter))
+            resp = req.post('{}{}'.format(url, final_qfilter),
+                            data=data,
+                            headers={'Content-Type':
+                                     'application/x-www-form-urlencoded'})
         except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
             return True, '\nadsb server connection fail: \n{}\n'.format(resp)
         if resp.status_code != 200:
             return True, '\nadsb server returned bad code: \n{}\n'.format(resp)
         else:
             ac_list = resp.text
+            ac_list_json = resp.json()
+            ldv = ac_list_json.get('lastDv', None)
         icao_list = gen_icao_list(ac_list)
-        rds_write_res, rds_write_err = wr_icao_redis(icao_list, r_client, 600)
+        rds_write_res, rds_write_err = wr_icao_redis(icao_list, r_client, 120,
+                                                     ldv=ldv)
         if rds_write_err:
             return True, rds_write_err
-        sleep(300)
+        sleep(60)
 
 
 def adsb_stream(server, port, r_client):
@@ -84,8 +95,28 @@ def gen_icao_list(acft_json):
     return icao_list
 
 
-def wr_icao_redis(icao_list, r_client, data_lifetime):
+def get_icao_redis(r_client):
+    try:
+        ldv = r_client.get('ldv')
+        keys = r_client.keys()
+    except (redis.exceptions.ConnectionError,
+            redis.exceptions.TimeoutError) as e:
+        return None, '\nredis connection fail: \n{}\n'.format(e.message)
+    if ldv:
+        try:
+            keys.remove(ldv)
+        except ValueError:
+            pass
+
+    print "retrieved {} records from redis".format(len(keys))
+    return keys, ldv
+
+
+def wr_icao_redis(icao_list, r_client, data_lifetime, ldv=None):
     pipe = r_client.pipeline()
+    if ldv:
+        pipe.set('ldv', ldv)
+        pipe.expire('ldv', data_lifetime)
     for icao in icao_list:
         pipe.hset(icao, "airborne", "true")
         pipe.expire(icao, data_lifetime)
