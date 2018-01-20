@@ -125,7 +125,7 @@ def details():
         icao = search_icoa
 
     try:
-        resp = req.get('{}/{}'.format(planedetails_url, icao))
+        resp = req.get('{}/{}'.format(planedetails_url, icao), timeout=3)
     except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
         return render_template('500.html'), 500
 
@@ -137,7 +137,7 @@ def details():
         plane_details = None
 
     try:
-        resp = req.get('{}/{}'.format(planepicture_url, icao))
+        resp = req.get('{}/{}'.format(planepicture_url, icao), timeout=3)
     except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
         return render_template('500.html'), 500
 
@@ -160,7 +160,7 @@ def health():
     picture_server = None
     redis_server = None
     try:
-        resp = req.get(health_url, timeout=3)
+        resp = req.get(health_url, timeout=12)
         if resp.status_code == 200:
             health_detail = resp.json()
             db_connection = health_detail.get('database_connection', None)
