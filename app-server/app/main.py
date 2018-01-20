@@ -7,13 +7,9 @@ import socket
 import redis
 import os
 pymysql.install_as_MySQLdb()
-DEV_MODE = False
 
 app = Flask(__name__)
-if not DEV_MODE:
-    app.config.from_pyfile('config/dev-config.cfg')
-else:
-    app.config.from_pyfile('config/config.cfg')
+app.config.from_pyfile('config/config.cfg')
 
 database_uri = 'mysql://{}:{}@{}/{}'.format(app.config['DATABASE_USER'],
                                             app.config['DATABASE_PWD'],
@@ -183,8 +179,4 @@ manager.create_api(Plane, methods=['GET', 'POST', 'DELETE'],
                    include_methods=['airborne'])
 
 if __name__ == '__main__':
-    DEV_MODE = os.getenv('DEV_ENV', None)
-    if not DEV_MODE:
-        app.run(host='0.0.0.0', debug=False, threaded=True, port=80)
-    else:
-        app.run(debug=True)
+    app.run(host='0.0.0.0', debug=False, threaded=True, port=80)
