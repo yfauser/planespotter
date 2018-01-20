@@ -157,7 +157,6 @@ def get_redis_key(icao):
                             int(app.config['REDIS_PORT']), s_timeout=0.5):
         return False
     airborne_state = r_client.hget(icao, "airborne")
-    print airborne_state, icao
     if not airborne_state:
         return False
     else:
