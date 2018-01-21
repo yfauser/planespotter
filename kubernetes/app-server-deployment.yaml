@@ -46,7 +46,7 @@ data:
     DATABASE_USER = 'planespotter'
     DATABASE_PWD = 'VMware1!'
     DATABASE = 'planespotter'
-    REDIS_HOST = '10.114.209.218'
+    REDIS_HOST = '10.114.209.211'
     REDIS_PORT = '6379'
 ---
 apiVersion: v1
