@@ -124,7 +124,10 @@ def details():
             acft = None
         icao = search_icoa
 
-    resp = req.get('{}/{}'.format(planedetails_url, icao), timeout=3)
+    try:
+        resp = req.get('{}/{}'.format(planedetails_url, icao), timeout=3)
+    except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
+        return render_template('500.html'), 500
 
     if resp.status_code == 200:
         plane_details = resp.json()
@@ -133,7 +136,10 @@ def details():
     else:
         plane_details = None
 
-    resp = req.get('{}/{}'.format(planepicture_url, icao), timeout=3)
+    try:
+        resp = req.get('{}/{}'.format(planepicture_url, icao), timeout=3)
+    except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
+        return render_template('500.html'), 500
 
     if resp.status_code == 200:
         plane_picture = resp.json()
