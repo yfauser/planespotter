@@ -1,0 +1,42 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: adsb-sync
+  namespace: planespotter
+  labels:
+    app: adsb-sync
+    tier: data-sync
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adsb-sync
+  template:
+    metadata:
+      labels:
+        app: adsb-sync
+    spec:
+      containers:
+      - name: adsb-sync
+        image: yfauser/adsb-sync:d96479c536829cd1746ec010e66c3d2464a06e52
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/src/app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: adsb-sync-cfg
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adsb-sync-cfg
+  namespace: planespotter
+data:
+  config.ini: |
+    [main]
+    redis_server = redis-server.redis.svc.cluster.local
+    adsb_server_poll_url = https://public-api.adsbexchange.com/VirtualRadar/AircraftList.json
+    adsb_poll_filter = ?fRegS=N
+    adsb_type = poll
