@@ -5,7 +5,6 @@ import pymysql
 import requests
 import socket
 import redis
-import os
 pymysql.install_as_MySQLdb()
 
 app = Flask(__name__)
