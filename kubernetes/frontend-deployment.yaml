@@ -5,18 +5,18 @@ metadata:
   name: planespotter-frontend
   namespace: planespotter
   labels:
-    app: planespotter
-    tier: app-tier
+    app: planespotter-frontend
+    tier: frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: planespotter
+      app: planespotter-frontend
   template:
     metadata:
       labels:
-        app: planespotter
-        tier: app-tier
+        app: planespotter-frontend
+        tier: frontend
     spec:
       containers:
       - name: adsb-sync
@@ -25,3 +25,31 @@ spec:
         env:
         - name: PLANESPOTTER_API_ENDPOINT
           value: planespotter-svc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: planespotter
+  name: planespotter-frontend
+  labels:
+    app: planespotter-frontend
+spec:
+  ports:
+    # the port that this service should serve on
+    - port: 80
+  selector:
+    app: planespotter-frontend
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: planespotter-frontend
+  namespace: planespotter
+spec:
+  rules:
+  - host: planespotter.pks.yves.local
+    http:
+      paths:
+      - backend:
+          serviceName: planespotter-frontend
+          servicePort: 80
