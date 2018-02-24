@@ -1,0 +1,91 @@
+Steps:
+======
+See this article as base reference: https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uwsgi-and-nginx-on-ubuntu-16-04
+
+Deploy one Ubuntu 16.04 machine somewhere, then:
+
+sudo apt-get update
+sudo apt-get install python-pip python-dev nginx
+
+sudo pip install --upgrade pip
+sudo pip install virtualenv
+
+git clone https://github.com/yfauser/planespotter.git
+
+cd planespotter/
+virtualenv app-server
+cd app-server/
+source bin/activate
+cd app
+pip install uwsgi Flask-Restless PyMySQL Flask-SQLAlchemy requests redis
+
+cat << EOF > /home/ubuntu/planespotter/app-server/app/wsgi.py
+from main import app
+
+if __name__ == "__main__":
+    app.run()
+EOF
+
+cat << EOF > /home/ubuntu/planespotter/app-server/app/config/config.cfg
+DATABASE_URL = '10.114.221.13'
+DATABASE_USER = 'planespotter'
+DATABASE_PWD = 'VMware1!'
+DATABASE = 'planespotter'
+REDIS_HOST = '10.114.221.12'
+REDIS_PORT = '6379'
+EOF
+
+
+cat << EOF > /home/ubuntu/planespotter/app-server/app/app-server.ini
+[uwsgi]
+module = wsgi:app
+master = true
+processes = 5
+socket = app-server.sock
+chmod-socket = 660
+vacuum = true
+die-on-term = true
+logto = /var/log/uwsgi/%n.log
+EOF
+
+sudo -H bash
+
+mkdir -p /var/log/uwsgi
+chown -R ubuntu:ubuntu /var/log/uwsgi
+
+cat << EOF > /etc/systemd/system/app-server.service
+[Unit]
+Description=uWSGI instance to serve app-server
+After=network.target
+[Unit]
+Description=uWSGI instance to serve app-server
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/planespotter/app-server/app
+Environment="PATH=/home/ubuntu/planespotter/app-server/bin"
+ExecStart=/home/ubuntu/planespotter/app-server/bin/uwsgi --ini app-server.ini
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl start app-server
+systemctl enable app-server
+
+cat << EOF > /etc/nginx/sites-enabled/default
+server {
+    listen 80;
+    server_name default;
+    location / {
+        include uwsgi_params;
+        uwsgi_pass unix:/home/ubuntu/planespotter/app-server/app/app-server.sock;
+    }
+}
+EOF
+
+systemctl restart nginx
+
+ufw allow 'Nginx Full'

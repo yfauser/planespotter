@@ -1,0 +1,53 @@
+Steps:
+======
+Deploy one Ubuntu 16.04 machine somewhere, then:
+
+sudo apt-get update
+sudo apt-get install python-pip python-dev
+
+sudo pip install --upgrade pip
+sudo pip install virtualenv
+
+cd /home/ubuntu
+
+git clone https://github.com/yfauser/planespotter.git
+
+cd planespotter/
+virtualenv adsb-sync
+cd adsb-sync/
+source bin/activate
+pip install -r requirements.txt
+
+cat << EOF > /home/ubuntu/planespotter/adsb-sync/synchronizer/config/config.ini
+[main]
+redis_server = localhost
+adsb_server_stream = pub-vrs.adsbexchange.com
+adsb_port = 32030
+adsb_server_poll_url = https://public-api.adsbexchange.com/VirtualRadar/AircraftList.json
+adsb_poll_filter = ?fRegS=N
+adsb_type = poll
+EOF
+
+sudo -H bash
+
+cat << EOF > /etc/systemd/system/adsb-sync.service
+[Unit]
+Description=adsb-sync
+After=network.target
+[Unit]
+Description=adsb-sync
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/planespotter/adsb-sync/synchronizer
+Environment="PATH=/home/ubuntu/planespotter/adsb-sync/bin"
+ExecStart=/home/ubuntu/planespotter/adsb-sync/bin/python adsb-sync.py
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl start adsb-sync
+systemctl enable adsb-sync

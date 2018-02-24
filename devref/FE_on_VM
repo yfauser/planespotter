@@ -1,0 +1,83 @@
+Steps:
+======
+See this article as base reference: https://www.digitalocean.com/community/tutorials/how-to-serve-flask-applications-with-uwsgi-and-nginx-on-ubuntu-16-04
+
+Deploy one Ubuntu 16.04 machine somewhere, then:
+
+sudo apt-get update
+sudo apt-get install python-pip python-dev nginx
+
+sudo pip install --upgrade pip
+sudo pip install virtualenv
+
+git clone https://github.com/yfauser/planespotter.git
+
+cd planespotter/
+virtualenv frontend
+cd frontend/
+source bin/activate
+cd app
+pip install -r requirements.txt
+pip install uwsgi
+
+cat << EOF > /home/ubuntu/planespotter/frontend/app/wsgi.py
+from main import app
+
+if __name__ == "__main__":
+    app.run()
+EOF
+
+cat << EOF > /home/ubuntu/planespotter/frontend/app/frontend.ini
+[uwsgi]
+module = wsgi:app
+master = true
+processes = 5
+socket = frontend.sock
+chmod-socket = 660
+vacuum = true
+die-on-term = true
+logto = /var/log/uwsgi/%n.log
+env = PLANESPOTTER_API_ENDPOINT=planespotter-api
+EOF
+
+sudo -H bash
+
+mkdir -p /var/log/uwsgi
+chown -R ubuntu:ubuntu /var/log/uwsgi
+
+cat << EOF > /etc/systemd/system/frontend.service
+[Unit]
+Description=uWSGI instance to serve frontend
+After=network.target
+[Unit]
+Description=uWSGI instance to serve frontend
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/planespotter/frontend/app
+Environment="PATH=/home/ubuntu/planespotter/frontend/bin;PLANESPOTTER_API_ENDPOINT=planespotter-api"
+ExecStart=/home/ubuntu/planespotter/frontend/bin/uwsgi --ini frontend.ini
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl start frontend
+systemctl enable frontend
+
+cat << EOF > /etc/nginx/sites-enabled/default
+server {
+    listen 80;
+    server_name default;
+    location / {
+        include uwsgi_params;
+        uwsgi_pass unix:/home/ubuntu/planespotter/frontend/app/frontend.sock;
+    }
+}
+EOF
+
+systemctl restart nginx
+
+ufw allow 'Nginx Full'
