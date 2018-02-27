@@ -16,6 +16,7 @@ database_uri = 'mysql://{}:{}@{}/{}'.format(app.config['DATABASE_USER'],
                                             app.config['DATABASE'])
 redis_server = app.config['REDIS_HOST']
 redis_port = app.config['REDIS_PORT']
+listen_port = int(app.config['LISTEN_PORT'])
 app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_POOL_TIMEOUT'] = 2
@@ -178,4 +179,4 @@ manager.create_api(Plane, methods=['GET', 'POST', 'DELETE'],
                    include_methods=['airborne'])
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=False, threaded=True, port=80)
+    app.run(host='0.0.0.0', debug=False, threaded=True, port=listen_port)
