@@ -154,7 +154,7 @@ def health():
     picture_server = None
     redis_server = None
     try:
-        resp = req.get(health_url, timeout=12)
+        resp = req.get(health_url, timeout=60)
         if resp.status_code == 200:
             health_detail = resp.json()
             db_connection = health_detail.get('database_connection', None)
