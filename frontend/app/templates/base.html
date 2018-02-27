@@ -40,7 +40,7 @@
       <!-- The justified navigation menu is meant for single line per list item.
            Multiple lines will require custom code not provided by Bootstrap. -->
       <div class="masthead">
-        <h3 class="text-muted">Planespotter</h3>
+        <h3 class="text-muted">Planespotter<small>, running on Host {{ host_name }} with IP {{ host_ip }}</small></h3>
         <nav>
           <ul class="nav nav-justified">
             <li {% block home_state %}{% endblock %}><a href="index.html">Home</a></li>

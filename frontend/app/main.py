@@ -3,8 +3,11 @@ from flask_paginate import Pagination, get_page_args
 import requests as req
 import os
 import json
+import commands
+import netifaces
 
 app = Flask(__name__)
+host_name = commands.getoutput("hostname")
 port = os.getenv('PORT', '5000')
 app_server_hostname = os.getenv('PLANESPOTTER_API_ENDPOINT', 'localhost')
 registry_url = 'http://{}/api/planes'.format(app_server_hostname)
@@ -17,7 +20,7 @@ health_url = 'http://{}/api/healthcheck'.format(app_server_hostname)
 @app.route('/')
 @app.route('/index.html')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', host_name=host_name, host_ip=host_ip)
 
 
 @app.route('/registry.html')
@@ -62,7 +65,7 @@ def registry():
     try:
         resp = req.get(registry_url, params=req_params, headers=headers,
                        timeout=6).json()
-    except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout) as e:
+    except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
         return render_template('500.html'), 500
 
     acfts_raw = resp.get('objects', None)
@@ -72,7 +75,8 @@ def registry():
     pagination = Pagination(page=page, total=num_results,
                             record_name='Aircrafts', bs_version=3)
 
-    return render_template('registry.html', acfts=acfts, pagination=pagination)
+    return render_template('registry.html', acfts=acfts, pagination=pagination,
+                           host_name=host_name, host_ip=host_ip)
 
 
 @app.route('/details.html')
@@ -143,7 +147,8 @@ def details():
         plane_picture = None
 
     return render_template('details.html', acft=acft, picture=plane_picture,
-                           acft_details=plane_details, icao=icao, search=True)
+                           acft_details=plane_details, icao=icao, search=True,
+                           host_name=host_name, host_ip=host_ip)
 
 
 @app.route('/health.html')
@@ -169,12 +174,14 @@ def health():
                            db_connection=db_connection,
                            position_server=position_server,
                            picture_server=picture_server,
-                           redis_server=redis_server)
+                           redis_server=redis_server,
+                           host_name=host_name, host_ip=host_ip)
 
 
 @app.route('/contact.html')
 def contact():
-    return render_template('contact.html')
+    return render_template('contact.html',
+                           host_name=host_name, host_ip=host_ip)
 
 
 @app.errorhandler(500)
@@ -197,6 +204,15 @@ def trim_dict_content(dict_to_trim):
         elif isinstance(value, bool):
             new_dict[key] = value
     return new_dict
+
+
+def get_ip():
+    for iface in netifaces.interfaces():
+        if iface in ['eth0', 'nsx-eth0', 'ens192']:
+            return netifaces.ifaddresses(iface)[netifaces.AF_INET][0]['addr']
+
+
+host_ip = get_ip()
 
 
 if __name__ == '__main__':
