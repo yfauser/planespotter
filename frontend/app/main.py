@@ -66,7 +66,8 @@ def registry():
         resp = req.get(registry_url, params=req_params, headers=headers,
                        timeout=6).json()
     except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
-        return render_template('500.html'), 500
+        return render_template('500.html',
+                               host_name=host_name, host_ip=host_ip), 500
 
     acfts_raw = resp.get('objects', None)
 
@@ -94,11 +95,14 @@ def details():
                 resp = req.get(registry_url, params=req_params,
                                headers=req_headers, timeout=3)
                 if resp.status_code == 500:
-                    return render_template('500.html'), 500
+                    return render_template('500.html',
+                                           host_name=host_name,
+                                           host_ip=host_ip), 500
                 resp_body = resp.json()
             except (req.exceptions.ConnectionError,
                     req.exceptions.ReadTimeout):
-                return render_template('500.html'), 500
+                return render_template('500.html', host_name=host_name,
+                                       host_ip=host_ip), 500
 
             acfts_raw = resp_body.get('objects', None)
             if acfts_raw:
@@ -107,9 +111,11 @@ def details():
             else:
                 return render_template('details.html', search=False,
                                        not_found=True,
-                                       registration_id=search_reg)
+                                       registration_id=search_reg,
+                                       host_name=host_name, host_ip=host_ip)
         else:
-            return render_template('details.html', search=False)
+            return render_template('details.html', search=False,
+                                   host_name=host_name, host_ip=host_ip)
     else:
         req_filters = [{"name": "mode_s_code_hex", "op": "eq",
                         "val": search_icoa}]
@@ -119,7 +125,8 @@ def details():
             resp = req.get(registry_url, params=req_params,
                            headers=req_headers, timeout=3).json()
         except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
-            return render_template('500.html'), 500
+            return render_template('500.html',
+                                   host_name=host_name, host_ip=host_ip), 500
 
         acfts_raw = resp.get('objects', None)
         if acfts_raw:
@@ -133,7 +140,8 @@ def details():
     if resp.status_code == 200:
         plane_details = resp.json()
     elif resp.status_code == 500:
-        return render_template('500.html'), 500
+        return render_template('500.html', host_name=host_name,
+                               host_ip=host_ip), 500
     else:
         plane_details = None
 
@@ -142,7 +150,8 @@ def details():
     if resp.status_code == 200:
         plane_picture = resp.json()
     elif resp.status_code == 500:
-        return render_template('500.html'), 500
+        return render_template('500.html',
+                               host_name=host_name, host_ip=host_ip), 500
     else:
         plane_picture = None
 
@@ -186,7 +195,8 @@ def contact():
 
 @app.errorhandler(500)
 def internal_server_error(e):
-    return render_template('500.html'), 500
+    return render_template('500.html',
+                           host_name=host_name, host_ip=host_ip), 500
 
 
 def trim_dict_content(dict_to_trim):
