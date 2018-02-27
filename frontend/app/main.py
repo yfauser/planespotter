@@ -3,11 +3,11 @@ from flask_paginate import Pagination, get_page_args
 import requests as req
 import os
 import json
-import commands
+import socket
 import netifaces
 
 app = Flask(__name__)
-host_name = commands.getoutput("hostname")
+host_name = host_name = socket.gethostname()
 port = os.getenv('PORT', '5000')
 app_server_hostname = os.getenv('PLANESPOTTER_API_ENDPOINT', 'localhost')
 registry_url = 'http://{}/api/planes'.format(app_server_hostname)
