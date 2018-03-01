@@ -54,7 +54,7 @@ spec:
     spec:
       containers:
       - name: adsb-sync
-        image: yfauser/adsb-sync:d96479c536829cd1746ec010e66c3d2464a06e52
+        image: yfauser/adsb-sync:1d791ea6e96eb50adb15e773d1d783f511618c97
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - name: config-volume
