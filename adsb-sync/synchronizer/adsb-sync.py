@@ -12,8 +12,9 @@ def adsb_poll(url, qfilter, r_client):
     print 'starting polling data ...'
     while True:
         try:
-            resp = req.get('{}{}'.format(url, qfilter))
-        except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
+            resp = req.get('{}{}'.format(url, qfilter), timeout=60)
+        except (req.exceptions.ConnectionError,
+                req.exceptions.ReadTimeout, req.exceptions.Timeout):
             return True, '\nadsb server connection fail: \n{}\n'.format(resp)
         if resp.status_code != 200:
             return True, '\nadsb server returned bad code: \n{}\n'.format(resp)
