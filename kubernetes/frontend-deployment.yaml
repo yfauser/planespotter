@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: adsb-sync
-        image: yfauser/planespotter-frontend:1508888202fc85246248c0892c0d27dda34de8e1
+        image: yfauser/planespotter-frontend:b0a8b3186c3c18fd23632cf45ff7504b23e7c5b9
         imagePullPolicy: IfNotPresent
         env:
         - name: PLANESPOTTER_API_ENDPOINT
