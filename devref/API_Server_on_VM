@@ -33,6 +33,7 @@ DATABASE_PWD = 'VMware1!'
 DATABASE = 'planespotter'
 REDIS_HOST = '10.114.221.12'
 REDIS_PORT = '6379'
+LISTEN_PORT = '80'
 EOF
 
 
