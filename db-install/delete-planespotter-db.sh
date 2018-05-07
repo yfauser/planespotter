@@ -1,2 +1,2 @@
 cd ~/planespotter/db-install/
-mysql -u root -p < delete-planespotter-db.sql
+mysql --user=root --password=$MYSQL_ROOT_PASSWORD < delete-planespotter-db.sql
