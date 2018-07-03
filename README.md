@@ -1,6 +1,6 @@
 Planespotter App
 ================
+Welcome to the home of the Planespotter Cloud Native Demo App.
 
-You can find a Demo App for Cloud Foundry and Kubernetes called 'Planespotter' in this repo. It is an App to search through public aircraft data made available by the FAA.
+I developed this App to demonstrate various networking capabilities of VMware NSX in vSphere, Kubernetes and Cloud Foundry environments. If you are curious to see what a VMware NSX Demo with Planespotter looks like, you can watch this Presentation at Network Field Day 2018:
 
-This Project is WIP, please come back soon and hopefully you will find more and better documentation
