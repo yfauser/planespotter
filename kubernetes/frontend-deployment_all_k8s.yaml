@@ -3,12 +3,11 @@ apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   name: planespotter-frontend
-  namespace: planespotter
   labels:
     app: planespotter-frontend
     tier: frontend
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: planespotter-frontend
@@ -19,7 +18,7 @@ spec:
         tier: frontend
     spec:
       containers:
-      - name: adsb-sync
+      - name: planespotter-fe
         image: yfauser/planespotter-frontend:b0a8b3186c3c18fd23632cf45ff7504b23e7c5b9
         imagePullPolicy: IfNotPresent
         env:
@@ -29,7 +28,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  namespace: planespotter
   name: planespotter-frontend
   labels:
     app: planespotter-frontend
@@ -44,10 +42,9 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: planespotter-frontend
-  namespace: planespotter
 spec:
   rules:
-  - host: planespotter.pks.yves.local
+  - host: planespotter.demo.yves.local
     http:
       paths:
       - backend:

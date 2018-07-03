@@ -1,0 +1,73 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis-server
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis-server
+        tier: backend
+    spec:
+      containers:
+      - name: redis-server
+        image: redis
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-server
+  labels:
+    app: redis-server
+    tier: backend
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis-server
+    tier: backend
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: adsb-sync
+  labels:
+    app: adsb-sync
+    tier: data-sync
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adsb-sync
+  template:
+    metadata:
+      labels:
+        app: adsb-sync
+    spec:
+      containers:
+      - name: adsb-sync
+        image: yfauser/adsb-sync:1d791ea6e96eb50adb15e773d1d783f511618c97
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/src/app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: adsb-sync-cfg
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adsb-sync-cfg
+data:
+  config.ini: |
+    [main]
+    redis_server = redis-server
+    adsb_server_poll_url = https://public-api.adsbexchange.com/VirtualRadar/AircraftList.json
+    adsb_poll_filter = ?fRegS=N
+    adsb_type = poll

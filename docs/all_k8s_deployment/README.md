@@ -33,7 +33,7 @@ parameters:
 [`storage_class.yaml`](../../kubernetes/storage_class.yaml)
 
 
-NOTE:
+__NOTE:__
 The above storage class has a vSphere provider specific parameter, your actual storage class might differ from the above
 
 ```shell
@@ -70,5 +70,376 @@ mysql-claim   Bound     pvc-2784ef8a-7ec2-11e8-8a7b-0050569aca4b   2Gi        RW
 ```
 
 Step 3) Deploy the MySQL Pod
+----------------------------
 Now we can deploy the Planespotter MySQL Database as a K8s Pod. Please take note of the config section, this is where the MySQL startup script will check if there is an existing Database in the persisten volume. This means that if you deleted the MySQL Pod, but kept the persistent volume, the time consuming download of the Data from the FAA Web-Site will be skipped and the existing Data will be used.
 
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: planespotter
+  labels:
+    app: mysql
+spec:
+  ports:
+  - port: 3306
+    name: mysql
+  clusterIP: None
+  selector:
+    app: mysql
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: planespotter
+spec:
+  serviceName: mysql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mysql
+        image: mysql:5.6
+        env:
+          # Use secret in real usage
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-vol
+          mountPath: /var/lib/mysql
+        - name: mysql-config
+          mountPath: /bin/planespotter-install.sh
+          subPath: planespotter-install.sh
+        - name: mysql-start
+          mountPath: /bin/mysql-start.sh
+          subPath: mysql-start.sh
+        command: ["/bin/mysql-start.sh"]
+      volumes:
+      - name: mysql-vol
+        persistentVolumeClaim:
+          claimName: mysql-claim
+      - name: mysql-config
+        configMap:
+          defaultMode: 0700
+          name: mysql-config-map
+      - name: mysql-start
+        configMap:
+          defaultMode: 0700
+          name: mysql-start-map
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config-map
+  namespace: planespotter
+data:
+  planespotter-install.sh: |
+    #!/bin/sh
+    # sleep while mysql is starting up
+    while [ -z "$ALIVE" ] || [ "$ALIVE" != 'mysqld is alive' ]
+    do
+      echo "waiting for mysql..."
+      sleep 3
+      ALIVE=`mysqladmin ping --user=root --password=$MYSQL_ROOT_PASSWORD`
+      echo "status: $ALIVE"
+    done
+    echo "MYSQL is alive, checking database..."
+    DBEXIST=`mysql --user=root --password=$MYSQL_ROOT_PASSWORD -e 'show databases;' | grep planespotter`
+    if ! [ -z "$DBEXIST" ]
+    then
+      echo "planespotter db already installed."
+    else
+      echo "------- MYSQL DATABASE SETUP -------"
+      echo "updating apt-get..."
+      apt-get update
+      echo "apt-get installing curl..."
+      apt-get --assume-yes install curl
+      apt-get --assume-yes install wget
+      apt-get --assume-yes install unzip
+      echo "downloading planespotter scripts..."
+      mkdir ~/planespotter
+      mkdir ~/planespotter/db-install
+      cd ~/planespotter/db-install
+      curl -L -o create-planespotter-db.sh https://github.com/yfauser/planespotter/raw/master/db-install/create-planespotter-db.sh
+      curl -L -o create-planespotter-db.sql https://github.com/yfauser/planespotter/raw/master/db-install/create-planespotter-db.sql
+      curl -L -o delete-planespotter-db.sh https://github.com/yfauser/planespotter/raw/master/db-install/delete-planespotter-db.sh
+      curl -L -o delete-planespotter-db.sql https://github.com/yfauser/planespotter/raw/master/db-install/delete-planespotter-db.sql
+      echo "creating a new planespotter db"
+      chmod +x create-planespotter-db.sh
+      ./create-planespotter-db.sh
+    fi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-start-map
+  namespace: planespotter
+data:
+  mysql-start.sh: |
+    #!/bin/sh
+    echo "starting planespotter-installer in background"
+    /bin/planespotter-install.sh &
+    echo "starting mysqld.."
+    /entrypoint.sh mysqld
+```
+[`mysql_pod.yaml`](../../kubernetes/mysql_pod.yaml)
+
+```shell
+kubectl create -f mysql_pod.yaml
+```
+
+Step 4) Deploy the App-Server Pod
+---------------------------------
+To deploy the API App Server, create the following yaml spec and deploy it:
+
+```yaml
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: planespotter-app
+  labels:
+    app: planespotter
+    tier: app-tier
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: planespotter-app
+  template:
+    metadata:
+      labels:
+        app: planespotter-app
+    spec:
+      containers:
+      - name: planespotter
+        image: yfauser/planespotter-app-server:1508888202fc85246248c0892c0d27dda34de8e1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: planespotter-app-cfg
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: planespotter-app-cfg
+  namespace: planespotter
+data:
+  config.cfg: |
+    DATABASE_URL = 'mysql'
+    DATABASE_USER = 'planespotter'
+    DATABASE_PWD = 'VMware1!'
+    DATABASE = 'planespotter'
+    REDIS_HOST = 'redis-server'
+    REDIS_PORT = '6379'
+    LISTEN_PORT = 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: planespotter-svc
+  labels:
+    app: planespotter-svc
+spec:
+  ports:
+    # the port that this service should serve on
+    - port: 80
+  selector:
+    app: planespotter-app
+```
+[`app-server-deployment_all_k8s.yaml`](../../kubernetes/app-server-deployment_all_k8s.yaml)
+
+```shell
+kubectl create -f app-server-deployment_all_k8s.yaml
+```
+
+Step 5) Deploy the Frontend
+---------------------------
+Now, deploy the frontend using the following yaml spec:
+
+```yaml
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: planespotter-frontend
+  labels:
+    app: planespotter-frontend
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: planespotter-frontend
+  template:
+    metadata:
+      labels:
+        app: planespotter-frontend
+        tier: frontend
+    spec:
+      containers:
+      - name: planespotter-fe
+        image: yfauser/planespotter-frontend:b0a8b3186c3c18fd23632cf45ff7504b23e7c5b9
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: PLANESPOTTER_API_ENDPOINT
+          value: planespotter-svc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: planespotter-frontend
+  labels:
+    app: planespotter-frontend
+spec:
+  ports:
+    # the port that this service should serve on
+    - port: 80
+  selector:
+    app: planespotter-frontend
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: planespotter-frontend
+  namespace: planespotter
+spec:
+  rules:
+  - host: planespotter.demo.yves.local
+    http:
+      paths:
+      - backend:
+          serviceName: planespotter-frontend
+          servicePort: 80
+```
+[`frontend-deployment_all_k8s.yaml`](../../kubernetes/frontend-deployment_all_k8s.yaml)
+
+__NOTE:__
+You obviously need to adapt the hostname in the Ingress spec to reflect your domain name. So change `- host: planespotter.demo.yves.local` to whatever your desired fqdn is.
+
+```shell
+kubectl create -f frontend-deployment_all_k8s.yaml
+```
+
+You should now be able to browse to the FQDN you used and get back the Planespotter Web-Pages. You should be able to browse through the Aircraft registry, but you should not yet see any airborne aircrafts, as we haven't deployed the ADSB Sync Service and the Redis in-memory DB/Cache yet
+
+Step 6) Deploy Redis and the ADSB Sync Service
+----------------------------------------------
+To deploy the redis cache and the ADSB Sync service, you can use the following yaml spec:
+```yaml
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis-server
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis-server
+        tier: backend
+    spec:
+      containers:
+      - name: redis-server
+        image: redis
+        ports:
+        - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-server
+  labels:
+    app: redis-server
+    tier: backend
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis-server
+    tier: backend
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: adsb-sync
+  labels:
+    app: adsb-sync
+    tier: data-sync
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: adsb-sync
+  template:
+    metadata:
+      labels:
+        app: adsb-sync
+    spec:
+      containers:
+      - name: adsb-sync
+        image: yfauser/adsb-sync:1d791ea6e96eb50adb15e773d1d783f511618c97
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/src/app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: adsb-sync-cfg
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: adsb-sync-cfg
+data:
+  config.ini: |
+    [main]
+    redis_server = redis-server
+    adsb_server_poll_url = https://public-api.adsbexchange.com/VirtualRadar/AircraftList.json
+    adsb_poll_filter = ?fRegS=N
+    adsb_type = poll
+```
+[`redis_and_adsb_sync_all_k8s.yaml`](../../kubernetes/redis_and_adsb_sync_all_k8s.yaml)
+
+
+```shell
+kubectl create -f redis_and_adsb_sync_all_k8s.yaml
+```
+
+__That's it, Planespotter should be all up and running now!!__
+
+
+Cleanup
+-------
+If you want to delete everything including the volume holding your database, you can simply delete the complete namespace and change back the Kubectl CLI to use the default namespace:
+
+```shell
+kubectl delete ns planespotter
+kubectl config set-context kubernetes-admin@kubernetes --namespace default
+```
+
+Alternatively, you can remove all the Deployments, Config Maps and Staeful set and keep your database persistent volume for later use:
+
+```shell
+kubectl delete -f redis_and_adsb_sync_all_k8s.yaml
+kubectl delete -f frontend-deployment_all_k8s.yaml
+kubectl delete -f app-server-deployment_all_k8s.yaml
+kubectl delete -f mysql_pod.yaml
+```

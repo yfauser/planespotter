@@ -51,7 +51,7 @@ spec:
       volumes:
       - name: mysql-vol
         persistentVolumeClaim:
-          claimName: mysql-vol
+          claimName: mysql-claim
       - name: mysql-config
         configMap:
           defaultMode: 0700
