@@ -45,3 +45,7 @@ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABI
 CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
 
+Acknowledgments
+===============
+I integrated a couple of ideas on how to deploy the App from https://github.com/nvpnathan, https://github.com/puckpuck and https://github.com/howardyoo. Thanks!
+

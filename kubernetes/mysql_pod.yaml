@@ -1,0 +1,117 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: planespotter
+  labels:
+    app: mysql
+spec:
+  ports:
+  - port: 3306
+    name: mysql
+  clusterIP: None
+  selector:
+    app: mysql
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: planespotter
+spec:
+  serviceName: mysql
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mysql
+        image: mysql:5.6
+        env:
+          # Use secret in real usage
+        - name: MYSQL_ROOT_PASSWORD
+          value: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-vol
+          mountPath: /var/lib/mysql
+        - name: mysql-config
+          mountPath: /bin/planespotter-install.sh
+          subPath: planespotter-install.sh
+        - name: mysql-start
+          mountPath: /bin/mysql-start.sh
+          subPath: mysql-start.sh
+        command: ["/bin/mysql-start.sh"]
+      volumes:
+      - name: mysql-vol
+        persistentVolumeClaim:
+          claimName: mysql-vol
+      - name: mysql-config
+        configMap:
+          defaultMode: 0700
+          name: mysql-config-map
+      - name: mysql-start
+        configMap:
+          defaultMode: 0700
+          name: mysql-start-map
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config-map
+  namespace: planespotter
+data:
+  planespotter-install.sh: |
+    #!/bin/sh
+    # sleep while mysql is starting up
+    while [ -z "$ALIVE" ] || [ "$ALIVE" != 'mysqld is alive' ]
+    do
+      echo "waiting for mysql..."
+      sleep 3
+      ALIVE=`mysqladmin ping --user=root --password=$MYSQL_ROOT_PASSWORD`
+      echo "status: $ALIVE"
+    done
+    echo "MYSQL is alive, checking database..."
+    DBEXIST=`mysql --user=root --password=$MYSQL_ROOT_PASSWORD -e 'show databases;' | grep planespotter`
+    if ! [ -z "$DBEXIST" ]
+    then
+      echo "planespotter db already installed."
+    else
+      echo "------- MYSQL DATABASE SETUP -------"
+      echo "updating apt-get..."
+      apt-get update
+      echo "apt-get installing curl..."
+      apt-get --assume-yes install curl
+      apt-get --assume-yes install wget
+      apt-get --assume-yes install unzip
+      echo "downloading planespotter scripts..."
+      mkdir ~/planespotter
+      mkdir ~/planespotter/db-install
+      cd ~/planespotter/db-install
+      curl -L -o create-planespotter-db.sh https://github.com/yfauser/planespotter/raw/master/db-install/create-planespotter-db.sh
+      curl -L -o create-planespotter-db.sql https://github.com/yfauser/planespotter/raw/master/db-install/create-planespotter-db.sql
+      curl -L -o delete-planespotter-db.sh https://github.com/yfauser/planespotter/raw/master/db-install/delete-planespotter-db.sh
+      curl -L -o delete-planespotter-db.sql https://github.com/yfauser/planespotter/raw/master/db-install/delete-planespotter-db.sql
+      echo "creating a new planespotter db"
+      chmod +x create-planespotter-db.sh
+      ./create-planespotter-db.sh
+    fi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-start-map
+  namespace: planespotter
+data:
+  mysql-start.sh: |
+    #!/bin/sh
+    echo "starting planespotter-installer in background"
+    /bin/planespotter-install.sh &
+    echo "starting mysqld.."
+    /entrypoint.sh mysqld
