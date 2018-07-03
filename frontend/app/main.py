@@ -9,6 +9,8 @@ import netifaces
 app = Flask(__name__)
 host_name = host_name = socket.gethostname()
 port = os.getenv('PORT', '5000')
+reg_timeout = os.getenv('TIMEOUT_REG', '5')
+other_timeout = os.getenv('TIMEOUT_OTHER', '5')
 app_server_hostname = os.getenv('PLANESPOTTER_API_ENDPOINT', 'localhost')
 registry_url = 'http://{}/api/planes'.format(app_server_hostname)
 planetypes_url = 'http://{}/api/planetypes'.format(app_server_hostname)
@@ -64,7 +66,7 @@ def registry():
     headers = {'Content-Type': 'application/json'}
     try:
         resp = req.get(registry_url, params=req_params, headers=headers,
-                       timeout=6).json()
+                       timeout=reg_timeout).json()
     except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
         return render_template('500.html',
                                host_name=host_name, host_ip=host_ip), 500
@@ -93,7 +95,7 @@ def details():
             req_params['q'] = json.dumps(dict(filters=req_filters))
             try:
                 resp = req.get(registry_url, params=req_params,
-                               headers=req_headers, timeout=3)
+                               headers=req_headers, timeout=reg_timeout)
                 if resp.status_code == 500:
                     return render_template('500.html',
                                            host_name=host_name,
@@ -123,7 +125,7 @@ def details():
         req_params['q'] = json.dumps(dict(filters=req_filters))
         try:
             resp = req.get(registry_url, params=req_params,
-                           headers=req_headers, timeout=3).json()
+                           headers=req_headers, timeout=reg_timeout).json()
         except (req.exceptions.ConnectionError, req.exceptions.ReadTimeout):
             return render_template('500.html',
                                    host_name=host_name, host_ip=host_ip), 500
@@ -135,7 +137,8 @@ def details():
             acft = None
         icao = search_icoa
 
-    resp = req.get('{}/{}'.format(planedetails_url, icao), timeout=3)
+    resp = req.get('{}/{}'.format(planedetails_url, icao),
+                   timeout=other_timeout)
 
     if resp.status_code == 200:
         plane_details = resp.json()
@@ -145,7 +148,8 @@ def details():
     else:
         plane_details = None
 
-    resp = req.get('{}/{}'.format(planepicture_url, icao), timeout=3)
+    resp = req.get('{}/{}'.format(planepicture_url, icao),
+                   timeout=other_timeout)
 
     if resp.status_code == 200:
         plane_picture = resp.json()
