@@ -426,6 +426,117 @@ kubectl create -f redis_and_adsb_sync_all_k8s.yaml
 __That's it, Planespotter should be all up and running now!!__
 
 
+Optional Step 7) Deploy a K8s network policy to secure the Planespotter app
+---------------------------------------------------------------------------
+You can apply a micro-segmentation poliy for the Planespotter app with the following K8s Network Policy Spec:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: planespotter-ing-to-fe
+spec:
+  podSelector:
+    matchLabels:
+      app: planespotter-frontend
+  policyTypes:
+  - Ingress
+  ingress:
+    - from:
+      - ipBlock:
+          cidr: 100.64.160.11/32
+      ports:
+      - protocol: TCP
+        port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: planespotter-fe-to-app
+spec:
+  podSelector:
+    matchLabels:
+      app: planespotter-app
+  policyTypes:
+  - Ingress
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: planespotter-frontend
+      ports:
+      - protocol: TCP
+        port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: planespotter-app-to-redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis-server
+  policyTypes:
+  - Ingress
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: planespotter-app
+      ports:
+      - protocol: TCP
+        port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: planespotter-adsb-to-redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis-server
+  policyTypes:
+  - Ingress
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: adsb-sync
+      ports:
+      - protocol: TCP
+        port: 6379
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mysql
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  policyTypes:
+  - Ingress
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: planespotter-app
+      ports:
+      - protocol: TCP
+        port: 3306
+```
+[`network-policy.yaml`](../../kubernetes/network-policy.yaml)
+
+
 Cleanup
 -------
 If you want to delete everything including the volume holding your database, you can simply delete the complete namespace and change back the Kubectl CLI to use the default namespace:
