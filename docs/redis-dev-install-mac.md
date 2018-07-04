@@ -1,4 +1,6 @@
-<https://gist.github.com/tomysmile/1b8a321e7c58499ef9f9441b2faa0aa8>
+Steps to use Redis on a Dev Workstation (MAC):
+==============================================
+See this article as base reference: https://gist.github.com/tomysmile/1b8a321e7c58499ef9f9441b2faa0aa8
 
 type below:
 

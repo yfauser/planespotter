@@ -20,7 +20,6 @@ Another option is to still deploy the MySQL DB using a VM based model, but keep 
 
 If you want to mix VMs, Kubernetes and Cloud Foundry, follow the [VM, K8s, CF deployment instructions](https://github.com/yfauser/planespotter/tree/master/docs/vm_k8s_cf_deployment/README.md).
 
-Last but not least, you can deploy everything in Cloud Foundry by following the [full deployment in Cloud Foundry instructions](https://github.com/yfauser/planespotter/tree/master/docs/all_cf_deployment/README.md)
 
 Contributing & Feedback:
 ========================
