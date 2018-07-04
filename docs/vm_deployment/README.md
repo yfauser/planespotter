@@ -39,7 +39,7 @@ Install the Planespotter Frontend Server using the instructions in [FE_on_VM.md]
 Make sure that the VM is resolvable through DNS, in this documentation we will use `planespotter.yflab.de`, whenever this fqdn is used, exchange it with your domain and desired hostname.
 
 # Step 5) Create the Redis and ADSB Sync Server
-Install the Redis Server using the instructions in [FE_on_VM.md](FE_on_VM.md)
+Install the Redis Server using the instructions in [Redis_on_VM.md](Redis_on_VM.md)
 On the same VM install the ASDB Sync Service using the instruction in [adsb_sync_on_VM.md](adsb_sync_on_VM.md)
 
 Make sure that the VM is resolvable through DNS, in this documentation we will use `redis.yflab.de`, whenever this fqdn is used, exchange it with your domain and desired hostname.
