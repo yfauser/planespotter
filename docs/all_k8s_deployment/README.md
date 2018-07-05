@@ -536,6 +536,46 @@ spec:
 ```
 [`network-policy.yaml`](../../kubernetes/network-policy.yaml)
 
+__NOTE:__ The Ingress source IP `cidr: 100.64.160.11/32` in the above example will be different in your environment. If you are using the VMware NSX Integration with Kubernetes, you can find the Ingress source IP using `kubectl get ingress <your_fe_ingress_name> -o yaml`
+
+```shell
+▶ kubectl get ingress planespotter-frontend -o yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    ncp/internal_ip_for_policy: 100.64.160.11
+  creationTimestamp: 2018-07-03T14:55:51Z
+  generation: 1
+  name: planespotter-frontend
+  namespace: planespotter
+  resourceVersion: "3260531"
+  selfLink: /apis/extensions/v1beta1/namespaces/planespotter/ingresses/planespotter-frontend
+  uid: 2dfe8744-7ed1-11e8-8a7b-0050569aca4b
+spec:
+  rules:
+  - host: planespotter.demo.yves.local
+    http:
+      paths:
+      - backend:
+          serviceName: planespotter-frontend
+          servicePort: 80
+status:
+  loadBalancer:
+    ingress:
+    - ip: 10.114.209.201
+    - ip: 100.64.160.11
+```
+
+The internal Ingress source IP can be found in the annotations section:
+
+```yaml
+metadata:
+  annotations:
+    ncp/internal_ip_for_policy: 100.64.160.11
+```
+
+When using other ingress controllers, like NGINX, that run as a Pod themselves, you can simply change the first policy to use a namespace/Pod selector instead of an ipBlock.
 
 Cleanup
 -------
