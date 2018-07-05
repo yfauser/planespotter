@@ -10,7 +10,6 @@ Simply follow the Steps in [../vm_deployment/MySQL_on_VM.md](../vm_deployment/My
 Make sure that the VM is resolvable through DNS, in this documentation we will use `mysql.yves.local`. Whenever this fqdn is used, exchange it with your domain and desired hostname.
 
 # Step 2) Create a new Namespace for the Planespotter App
----------------------------------------------------------
 Create a new namespace and set your Kubernetes CLI to use this Namespace by default
 
 ```shell
@@ -160,8 +159,7 @@ kubectl create -f frontend-deployment_all_k8s.yaml
 
 You should now be able to browse to the FQDN you used and get back the Planespotter Web-Pages. You should be able to browse through the Aircraft registry, but you should not yet see any airborne aircrafts, as we haven't deployed the ADSB Sync Service and the Redis in-memory DB/Cache yet
 
-Step 6) Deploy Redis and the ADSB Sync Service
-----------------------------------------------
+Step 5) Deploy Redis and the ADSB Sync Service
 To deploy the redis cache and the ADSB Sync service, you can use the following yaml spec:
 ```yaml
 ---
