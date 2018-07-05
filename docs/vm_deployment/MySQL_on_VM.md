@@ -16,7 +16,7 @@ See more details here: <https://www.digitalocean.com/community/tutorials/how-to-
 
 # Some more housekeeping
 
-7. Install unzip and git with ´sudo apt-get install unzip git´
+7. Install unzip and git with `sudo apt-get install unzip git`
 
 # Create the Database
 

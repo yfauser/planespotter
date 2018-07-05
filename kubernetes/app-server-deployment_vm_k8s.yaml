@@ -1,0 +1,58 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: planespotter-app
+  labels:
+    app: planespotter
+    tier: app-tier
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: planespotter-app
+  template:
+    metadata:
+      labels:
+        app: planespotter-app
+    spec:
+      containers:
+      - name: planespotter
+        image: yfauser/planespotter-app-server:1508888202fc85246248c0892c0d27dda34de8e1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: planespotter-app-cfg
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: planespotter-app-cfg
+data:
+  config.cfg: |
+    DATABASE_URL = 'mysql.yves.local'
+    DATABASE_USER = 'planespotter'
+    DATABASE_PWD = 'VMware1!'
+    DATABASE = 'planespotter'
+    REDIS_HOST = 'redis-server'
+    REDIS_PORT = '6379'
+    LISTEN_PORT = 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: planespotter-svc
+  labels:
+    app: planespotter-svc
+spec:
+  ports:
+    # the port that this service should serve on
+    - port: 80
+  selector:
+    app: planespotter-app
+
