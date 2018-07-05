@@ -159,7 +159,7 @@ kubectl create -f frontend-deployment_all_k8s.yaml
 
 You should now be able to browse to the FQDN you used and get back the Planespotter Web-Pages. You should be able to browse through the Aircraft registry, but you should not yet see any airborne aircrafts, as we haven't deployed the ADSB Sync Service and the Redis in-memory DB/Cache yet
 
-Step 5) Deploy Redis and the ADSB Sync Service
+# Step 5) Deploy Redis and the ADSB Sync Service
 To deploy the redis cache and the ADSB Sync service, you can use the following yaml spec:
 ```yaml
 ---
