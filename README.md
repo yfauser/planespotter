@@ -20,6 +20,25 @@ Another option is to still deploy the MySQL DB using a VM based model, but keep 
 
 If you want to mix VMs, Kubernetes and Cloud Foundry, follow the [VM, K8s, CF deployment instructions](https://github.com/yfauser/planespotter/tree/master/docs/vm_k8s_cf_deployment/README.md).
 
+Communication Matrix:
+=====================
+One of the goals of the Planespotter app is to demonstrate micro-segmentation policies in Kubernetes, Cloud Foundry, vSphere with NSX, etc. Therefore the App is build with this in mind and uses quick timeouts to show the impact of firewall rule changes and includes a 'healtcheck' function that reports back communication issues between the 'microservices' of the app.
+
+Here's the Communication Matrix of the component amongst each other and to the external world:
+
+| Component / Source     | Component / Destination       | Dest Port | Notes                               |
+|:-----------------------|:------------------------------|:----------|:------------------------------------|
+| Ext. Clients / Browser | Planespotter Frontend         | TCP/80    |                                     |
+| Ext. Clients / Browser | www.airport-data.com          | TCP/80    | Display Aircraft Thumbnail picture  |
+| Planespotter Frontend  | Planespotter API/APP          | TCP/80    | The listening port is configurable  |
+| Planespotter API/APP   | Planespotter MySQL	         | TCP/3306  | 									   |
+| Planespotter API/APP   | Planespotter Redis	         | TCP/6379  | 									   |
+| Planespotter API/APP   | www.airport-data.com          | TCP/80    | Find Aircraft Thumbnail pictures    |
+| Planespotter API/APP   | public-api.adsbexchange.com   | TCP/443   | Retrieves latest Aircraft position  |
+| ADSB-Sync       		 | www.airport-data.com          | TCP/443   | Retr. Acft. Airbone stat. in poll   |
+| ADSB-Sync       		 | www.airport-data.com          | TCP/32030 | Retr. Acft. Airbone stat. in stream |
+| ADSB-Sync       		 | Planespotter Redis            | TCP/6379  | 									   |
+
 
 Contributing & Feedback:
 ========================
