@@ -3,6 +3,7 @@ apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   name: planespotter-frontend
+  namespace: planespotter
   labels:
     app: planespotter-frontend
     tier: frontend
@@ -33,6 +34,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: planespotter-frontend
+  namespace: planespotter
   labels:
     app: planespotter-frontend
 spec:
@@ -46,6 +48,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: planespotter-frontend
+  namespace: planespotter
 spec:
   rules:
   - host: planespotter.demo.yves.local
