@@ -207,6 +207,7 @@ apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: planespotter-app
+  namespace: planespotter
   labels:
     app: planespotter
     tier: app-tier
@@ -253,6 +254,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: planespotter-svc
+  namespace: planespotter
   labels:
     app: planespotter-svc
 spec:
@@ -278,6 +280,7 @@ apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   name: planespotter-frontend
+  namespace: planespotter
   labels:
     app: planespotter-frontend
     tier: frontend
@@ -304,6 +307,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: planespotter-frontend
+  namespace: planespotter
   labels:
     app: planespotter-frontend
 spec:
