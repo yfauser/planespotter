@@ -47,6 +47,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: mysql-claim
+  namespace: planespotter
   annotations:
     volume.beta.kubernetes.io/storage-class: thin-disk
 spec:
@@ -351,6 +352,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: redis-server
+  namespace: planespotter
 spec:
   replicas: 1
   template:
@@ -369,6 +371,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-server
+  namespace: planespotter
   labels:
     app: redis-server
     tier: backend
@@ -383,6 +386,7 @@ apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   name: adsb-sync
+  namespace: planespotter
   labels:
     app: adsb-sync
     tier: data-sync
@@ -412,6 +416,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: adsb-sync-cfg
+  namespace: planespotter
 data:
   config.ini: |
     [main]
@@ -439,6 +444,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny
+  namespace: planespotter
 spec:
   podSelector: {}
   policyTypes:
@@ -448,6 +454,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: planespotter-ing-to-fe
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
@@ -466,6 +473,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: planespotter-fe-to-app
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
@@ -485,6 +493,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: planespotter-app-to-redis
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
@@ -504,6 +513,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: planespotter-adsb-to-redis
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
@@ -523,6 +533,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: mysql
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
@@ -537,6 +548,7 @@ spec:
       ports:
       - protocol: TCP
         port: 3306
+
 ```
 [`network-policy.yaml`](../../kubernetes/network-policy.yaml)
 

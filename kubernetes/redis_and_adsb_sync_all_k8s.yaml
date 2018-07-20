@@ -3,6 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: redis-server
+  namespace: planespotter
 spec:
   replicas: 1
   template:
@@ -21,6 +22,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-server
+  namespace: planespotter
   labels:
     app: redis-server
     tier: backend
@@ -35,6 +37,7 @@ apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
   name: adsb-sync
+  namespace: planespotter
   labels:
     app: adsb-sync
     tier: data-sync
@@ -64,6 +67,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: adsb-sync-cfg
+  namespace: planespotter
 data:
   config.ini: |
     [main]

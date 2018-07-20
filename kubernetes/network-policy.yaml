@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: default-deny
+  namespace: planespotter
 spec:
   podSelector: {}
   policyTypes:
@@ -11,6 +12,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: planespotter-ing-to-fe
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
@@ -29,6 +31,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: planespotter-fe-to-app
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
@@ -48,6 +51,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: planespotter-app-to-redis
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
@@ -67,6 +71,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: planespotter-adsb-to-redis
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
@@ -86,6 +91,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: mysql
+  namespace: planespotter
 spec:
   podSelector:
     matchLabels:
