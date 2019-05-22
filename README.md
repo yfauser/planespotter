@@ -1,3 +1,5 @@
+__NOTE__: This Application is not functioning correctly anymore as it is right now. It was developed as a nice Demo showing the capabilities of VMware's NSX Product for Network Virtualization. By now, the backend API service moved to a paid or contribute model (https://www.adsbexchange.com/data/#). You are free to use this web service, but you will have to get an API key to access the data before this app starts to function correctly.
+
 Planespotter App
 ================
 Welcome to the home of the Planespotter Cloud Native Demo App.
